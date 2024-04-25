@@ -16,3 +16,4 @@ class Advice(models.Model):
 
     def __str__(self):
         return f"Advice {self.id} for Record {self.record.id}"
+

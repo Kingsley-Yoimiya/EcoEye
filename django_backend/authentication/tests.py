@@ -20,3 +20,4 @@ class AuthenticationTestCase(APITestCase):
         data = {"username": "testuser", "password": "testpassword"}
         response = self.client.post(reverse('login'), data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+

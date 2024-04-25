@@ -21,3 +21,4 @@ class ShareViewTest(TestCase):
         response = self.client.post(self.share_url, share_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, {"message": "Content shared successfully"})
+

@@ -33,3 +33,4 @@ class AnalysisViewTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("Analysis completed", response.data["message"])
         # 这里可以添加更多的断言来检查分析结果的具体内容
+

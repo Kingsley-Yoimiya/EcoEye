@@ -51,3 +51,4 @@ class AdviceViewTest(TestCase):
         response = self.client.get(reverse('advice', kwargs={'recordId': self.advice.record.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)  # 假设只有一个建议
+

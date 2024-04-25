@@ -14,3 +14,4 @@ class AdviceView(APIView):
         advice = Advice.objects.filter(record_id=recordId)
         serializer = AdviceSerializer(advice, many=True)
         return Response(serializer.data)
+

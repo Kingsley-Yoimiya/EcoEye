@@ -12,3 +12,4 @@ class ShareView(APIView):
         # 模拟分享过程
         print(f"Sharing to {platform} with content: {content}")
         return Response({"message": "Content shared successfully"}, status=status.HTTP_200_OK)
+

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dotted_border/dotted_border.dart';
 import '../controllers/history_controller.dart';
 import 'registration_screen.dart';
 import 'login_screen.dart';
@@ -99,19 +100,31 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Column(
         children: <Widget>[
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.3,
-            child: Center(
-              child: OutlinedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => UploadScreen()),
-                ),
-                child: Text('上传图片！', style: TextStyle(fontFamily: 'Songti', fontWeight: FontWeight.bold, fontSize: 18,),),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.blue, style: BorderStyle.solid),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: DottedBorder(
+              color: Colors.blue,
+              strokeWidth: 2,
+              dashPattern: [6, 3],
+              borderType: BorderType.RRect,
+              radius: Radius.circular(12),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.3,
+                color: Colors.white,
+                child: Center(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => UploadScreen()),
+                    ),
+                    child: Text('上传图片！', style: TextStyle(fontFamily: 'Songti', fontWeight: FontWeight.bold, fontSize: 18,),),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: BorderSide(color: Colors.transparent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
               ),

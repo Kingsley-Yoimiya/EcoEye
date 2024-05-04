@@ -22,5 +22,18 @@ class Validators {
     return null;
   }
 
+  static String? usernameValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Username cannot be empty';
+    }
+    if (value.length < 3) {
+      return 'Username must be at least 3 characters long';
+    }
+    if (value.length > 10) {
+      return 'Username too long';
+    }
+    return null;
+  }
+
   // 可以根据需要添加更多验证器
 }

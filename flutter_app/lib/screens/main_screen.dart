@@ -31,11 +31,13 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('植识通-你的随身植物专家',
-                    style: TextStyle(
-                      fontFamily: 'Kaiti',
-                    ),
-                ),
+        title: Text(
+          '植识通-你的随身植物专家',
+          style: TextStyle(
+            fontFamily: 'Kaiti',
+          ),
+        ),
+        centerTitle: true,
         actions: <Widget>[
           if (username != null)
             PopupMenuButton<int>(
@@ -66,17 +68,36 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          ElevatedButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => UploadScreen()),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.3,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UploadScreen()),
+                ),
+                child: Text('上传图片！',style: TextStyle(fontFamily: 'Songti',),),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.blue, style: BorderStyle.solid),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ),
-            child: Text('Upload and Analyze Image'),
           ),
           Expanded(
-            child: _buildHistorySection(context),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: _buildHistorySection(context),
+              ),
+            ),
           ),
         ],
       ),
@@ -84,7 +105,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildHistorySection(BuildContext context) {
-    // 假设这里有一个方法来获取最近的历史记录，这里只是一个占位符
     return Column(
       children: [
         Align(
@@ -94,19 +114,29 @@ class _MainScreenState extends State<MainScreen> {
               context,
               MaterialPageRoute(builder: (context) => HistoryRecordScreen()),
             ),
-            child: Text('View More'),
+            child: Text('更多历史记录',style: TextStyle(fontFamily: 'Songti',),),
           ),
         ),
-        // 这里应该根据实际的数据动态构建历史记录列表
-        ListTile(
-          title: Text('Record 1'),
-          subtitle: Text('2021-01-01'),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ResultDisplayScreen(results: 'Sample Results')), // 需要调整参数
+        Expanded(
+          child: ListView(
+            children: [
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  title: Text('Record 1'),
+                  subtitle: Text('2021-01-01'),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ResultDisplayScreen(results: 'Sample Results')), // 需要调整参数
+                  ),
+                ),
+              ),
+              // 添加更多 Card 来展示其他记录
+            ],
           ),
         ),
-        // 添加更多 ListTile 来展示其他记录
       ],
     );
   }

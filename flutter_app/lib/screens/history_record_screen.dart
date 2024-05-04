@@ -12,8 +12,8 @@ class _HistoryRecordScreenState extends State<HistoryRecordScreen> {
   final HistoryController _controller = HistoryController();
 
   Future<List<dynamic>> _fetchHistory() async {
-    String historyJson = await _controller.fetchHistory("user123"); // 使用示例用户ID
-    return jsonDecode(historyJson);
+    List<Map<String, dynamic>> history = await _controller.fetchHistory("user123"); // 使用示例用户ID
+    return history;
   }
 
   @override

@@ -8,11 +8,14 @@ class UserManagementController {
     try {
       var response = await http.post(
         Uri.parse(ApiService.registerUrl),
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
           'username': username,
           'password': password,
           'email': email,
-        },
+        }),
       );
       if (response.statusCode == 200) {
         return "User created successfully";
@@ -28,10 +31,13 @@ class UserManagementController {
     try {
       var response = await http.post(
         Uri.parse(ApiService.loginUrl),
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
           'username': username,
           'password': password,
-        },
+        }),
       );
       if (response.statusCode == 200) {
         // 解析响应体中的数据

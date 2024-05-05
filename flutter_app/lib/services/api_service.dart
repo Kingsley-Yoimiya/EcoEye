@@ -1,10 +1,10 @@
 class ApiService {
   // 基础URL
-  static const String baseUrl = 'http://yourapi.com/api';
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   // 用户管理相关的URL
-  static const String registerUrl = '$baseUrl/register';
-  static const String loginUrl = '$baseUrl/login';
+  static const String registerUrl = '$baseUrl/authentication/register/';
+  static const String loginUrl = '$baseUrl/authentication/login/';
 
   // 历史记录相关的URL
   static const String historyUrl = '$baseUrl/history';

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',  # 确保你已经安装了 Django Rest Framework
+    'rest_framework.authtoken',
     'authentication',
     'history',
     'upload',

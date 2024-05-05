@@ -76,9 +76,9 @@ class LoginScreen extends StatelessWidget {
                           _passwordController.text,
                         );
                         if (loginResponse == "Login successful") {
-                          Navigator.pushReplacement(
-                            context,
+                          Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(builder: (context) => MainScreen()),
+                            (route) => false,
                           );
                         } else {
                           _showDialog("登录失败", loginResponse);

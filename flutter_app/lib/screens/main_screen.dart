@@ -218,6 +218,6 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       username = null;
     });
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => LoginScreen()));
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MainScreen()));
   }
 }

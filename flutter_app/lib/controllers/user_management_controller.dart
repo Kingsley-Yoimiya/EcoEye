@@ -17,7 +17,7 @@ class UserManagementController {
           'email': email,
         }),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         return "User created successfully";
       } else {
         return "Failed to register user";
@@ -43,7 +43,7 @@ class UserManagementController {
         // 解析响应体中的数据
         var data = json.decode(response.body);
         // 假设服务器返回的响应体中包含用户名、用户 ID 和 token
-        String userId = data['userId'];
+        String userId = data['userId'].toString();
         String token = data['token'];
 
         // 使用 SharedPreferences 保存用户名、用户 ID 和 token
@@ -52,7 +52,7 @@ class UserManagementController {
         await prefs.setString('userId', userId);
         await prefs.setString('username', username);
         await prefs.setString('token', token);
-
+        
         return "Login successful";
       } else {
         return "Invalid credentials";

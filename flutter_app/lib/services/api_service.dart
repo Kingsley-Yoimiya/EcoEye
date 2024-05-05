@@ -7,7 +7,7 @@ class ApiService {
   static const String loginUrl = '$baseUrl/authentication/login/';
 
   // 历史记录相关的URL
-  static const String historyUrl = '$baseUrl/history';
+  static const String historyUrl = '$baseUrl/history/records';
 
   // 上传和分析相关的URL
   static const String uploadUrl = '$baseUrl/upload';

@@ -33,18 +33,6 @@ class _HistoryRecordScreenState extends State<HistoryRecordScreen> {
           "timestamp": 0,
           "status": "User not logged in"
         },
-        // {
-        //   "recordId": 114514,
-        //   "userId": 0,
-        //   "timestamp": "2024.1.2",
-        //   "status": "Success"
-        // },
-        // {
-        //   "recordId": 0,
-        //   "userId": 0,
-        //   "timestamp": "2024.1.2",
-        //   "status": "Failed to load history"
-        // }
       ];
     }
 
@@ -57,7 +45,14 @@ class _HistoryRecordScreenState extends State<HistoryRecordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('历史记录', style: TextStyle(fontFamily: 'Kaiti', fontWeight: FontWeight.bold, fontSize: 23)),
+        title: Text(
+          '历史记录',
+          style: TextStyle(
+            fontFamily: 'Kaiti',
+            fontWeight: FontWeight.bold,
+            fontSize: 23,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -74,8 +69,14 @@ class _HistoryRecordScreenState extends State<HistoryRecordScreen> {
   }
 
   Widget _buildHistorySection(BuildContext context) {
+    if (historyList.isEmpty) {
+      return Center(
+        child: Text("历史记录为空"),
+      );
+    }
+
     return ListView.builder(
-      itemCount: historyList.length,
+      itemCount: historyList.length <= 20 ? historyList.length : 20,
       itemBuilder: (context, index) {
         final record = historyList[index];
         return Card(
@@ -92,8 +93,16 @@ class _HistoryRecordScreenState extends State<HistoryRecordScreen> {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                record['status'] == "Success" ? "成功" : record['status'] == "User not logged in" ? "失败 | 用户未登录" : "失败",
-                style: TextStyle(fontFamily: 'Songti', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
+                record['status'] == "Success"
+                    ? "成功"
+                    : record['status'] == "User not logged in"
+                        ? "失败 | 用户未登录"
+                        : "失败",
+                style: TextStyle(
+                    fontFamily: 'Songti',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: Colors.white),
               ),
             ),
             onTap: () {
@@ -104,7 +113,9 @@ class _HistoryRecordScreenState extends State<HistoryRecordScreen> {
               } else {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ResultDisplayScreen(results: "Sample Result")),
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          ResultDisplayScreen(results: "Sample Result")),
                 );
               }
             },

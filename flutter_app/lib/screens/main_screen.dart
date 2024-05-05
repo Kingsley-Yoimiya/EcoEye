@@ -25,7 +25,7 @@ class _MainScreenState extends State<MainScreen> {
     _loadUserInfo();
   }
 
-  _loadUserInfo() async {
+  Future<void> _loadUserInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       username = prefs.getString('username');
@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
     });
 
     if (userId != null) {
-      _loadHistory(userId!);
+      await _loadHistory(userId!);
     } else {
       // 用户未登录，设置默认的错误记录
       setState(() {
@@ -49,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  _loadHistory(String userId) async {
+  Future<void> _loadHistory(String userId) async {
     List<Map<String, dynamic>> historyData = await _historyController.fetchHistory(userId);
     setState(() {
       historyList = historyData.take(10).toList();
@@ -82,17 +82,24 @@ class _MainScreenState extends State<MainScreen> {
               children: [
                 IconButton(
                   icon: Icon(Icons.login),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginScreen()),
-                  ),
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                    );
+                    if (result == "Login successful") {
+                      await _loadUserInfo();  // Reload user info and history
+                    }
+                  },
                 ),
                 IconButton(
                   icon: Icon(Icons.app_registration),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => RegistrationScreen()),
-                  ),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RegistrationScreen()),
+                    );
+                  },
                 ),
               ],
             ),
@@ -113,11 +120,18 @@ class _MainScreenState extends State<MainScreen> {
                 color: Colors.white,
                 child: Center(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => UploadScreen()),
-                    ),
-                    child: Text('上传图片！', style: TextStyle(fontFamily: 'Songti', fontWeight: FontWeight.bold, fontSize: 18,),),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => UploadScreen()),
+                      );
+                    },
+                    child: Text('上传图片！',
+                        style: TextStyle(
+                          fontFamily: 'Songti',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        )),
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white,
                       side: BorderSide(color: Colors.transparent),
@@ -157,48 +171,71 @@ class _MainScreenState extends State<MainScreen> {
               context,
               MaterialPageRoute(builder: (context) => HistoryRecordScreen()),
             ),
-            child: Text('更多历史记录', style: TextStyle(fontFamily: 'Songti', fontWeight: FontWeight.bold, fontSize: 14,),),
+            child: Text(
+              '更多历史记录',
+              style: TextStyle(
+                fontFamily: 'Songti',
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: historyList.length,
-            itemBuilder: (context, index) {
-              final record = historyList[index];
-              return Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  title: Text("#${record['recordId']}"),
-                  subtitle: record["timestamp"] != 0 ? Text("${record['timestamp']}") : null,
-                  trailing: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: record['status'] == "Success" ? Colors.green : Colors.red,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      record['status'] == "Success" ? "成功" : record['status'] == "User not logged in" ? "失败 | 用户未登录" : "失败",
-                      style: TextStyle(fontFamily: 'Songti', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
-                    ),
-                  ),
-                  onTap: () {
-                    if (record['status'] != "Success") {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(record['status'])),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ResultDisplayScreen(results: "Sample Result")),
-                      );
-                    }
+          child: historyList.isEmpty
+              ? Center(child: Text("历史记录为空"))
+              : ListView.builder(
+                  itemCount: historyList.length,
+                  itemBuilder: (context, index) {
+                    final record = historyList[index];
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        title: Text("#${record['recordId']}"),
+                        subtitle: record["timestamp"] != 0
+                            ? Text("${record['timestamp']}")
+                            : null,
+                        trailing: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: record['status'] == "Success"
+                                ? Colors.green
+                                : Colors.red,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            record['status'] == "Success"
+                                ? "成功"
+                                : record['status'] == "User not logged in"
+                                    ? "失败 | 用户未登录"
+                                    : "失败",
+                            style: TextStyle(
+                                fontFamily: 'Songti',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: Colors.white),
+                          ),
+                        ),
+                        onTap: () {
+                          if (record['status'] != "Success") {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(record['status'])),
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      ResultDisplayScreen(results: "Sample Result")),
+                            );
+                          }
+                        },
+                      ),
+                    );
                   },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );
@@ -217,7 +254,9 @@ class _MainScreenState extends State<MainScreen> {
     await prefs.clear();
     setState(() {
       username = null;
+      userId = null;  // Clear userId on logout
     });
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MainScreen()));
+    Navigator.of(context)
+        .pushReplacement(MaterialPageRoute(builder: (context) => MainScreen()));
   }
 }

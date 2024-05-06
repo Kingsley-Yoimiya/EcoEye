@@ -121,10 +121,13 @@ class _MainScreenState extends State<MainScreen> {
                 child: Center(
                   child: OutlinedButton(
                     onPressed: () async {
-                      await Navigator.push(
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => UploadScreen()),
                       );
+                      if (result == "Login successful") {
+                          await _loadUserInfo();  // Reload user info and history
+                        }
                     },
                     child: Text('上传图片！',
                         style: TextStyle(

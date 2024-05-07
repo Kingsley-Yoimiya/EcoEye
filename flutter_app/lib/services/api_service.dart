@@ -10,7 +10,7 @@ class ApiService {
   static const String historyUrl = '$baseUrl/history/records';
 
   // 上传和分析相关的URL
-  static const String uploadUrl = '$baseUrl/upload';
+  static const String uploadUrl = '$baseUrl/upload/upload';
   static const String analyzeUrl = '$baseUrl/analyze';
 
   // 分享相关的URL

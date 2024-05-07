@@ -1,27 +1,52 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
-import 'dart:io';
 
 class UploadAndAnalysisController {
-  Future<String> uploadPhoto(File photo) async {
+  Future<String> _getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
+  Future<String> _getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId') ?? '';
+  }
+
+  Future<String> uploadPhoto(Uint8List photoBytes, String filename) async {
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(ApiService.uploadUrl))
-        ..files.add(await http.MultipartFile.fromPath('photo', photo.path));
+      String token = await _getToken();
+      String userId = await _getUserId();
+      
+      var request = http.MultipartRequest('POST', Uri.parse(ApiService.uploadUrl));
+      request.headers['Authorization'] = 'Token $token';
+      request.fields['userId'] = userId;
+      request.files.add(http.MultipartFile.fromBytes('photo', photoBytes, filename: filename));
+      
       var response = await request.send();
       if (response.statusCode == 200) {
         return "File uploaded successfully";
       } else {
-        return "Failed to upload file";
+        var responseBody = await response.stream.bytesToString();
+        return "Failed to upload file: $responseBody";
       }
     } catch (e) {
       return "Error occurred: $e";
     }
   }
 
-  Future<String> analyzePhoto(File photo) async {
+  Future<String> analyzePhoto(Uint8List photoBytes, String filename) async {
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(ApiService.analyzeUrl))
-        ..files.add(await http.MultipartFile.fromPath('photo', photo.path));
+      String token = await _getToken();
+      String userId = await _getUserId();
+      
+      var request = http.MultipartRequest('POST', Uri.parse(ApiService.analyzeUrl));
+      request.headers['Authorization'] = 'Token $token';
+      request.fields['userId'] = userId;
+      request.files.add(http.MultipartFile.fromBytes('photo', photoBytes, filename: filename));
+      
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 200) {

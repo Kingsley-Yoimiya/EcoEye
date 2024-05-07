@@ -1,23 +1,45 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.storage import default_storage
+from django.utils.text import get_valid_filename
+from django.conf import settings
+from history.models import Record
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 class UploadView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         file = request.FILES.get('photo')
         if file:
-            file_name = default_storage.save(file.name, file)
-            return Response({"message": "File uploaded successfully", "file": file_name}, status=status.HTTP_200_OK)
+            try:
+                valid_filename = get_valid_filename(file.name)
+                file_name = default_storage.save(valid_filename, file)
+                record = Record.objects.create(userId="1223", photo=file_name, timestamp=timezone.now())
+                return Response({"message": "File uploaded successfully", "file": file_name, "recordId": record.id}, status=status.HTTP_200_OK)
+            except Exception as e:
+                logger.error(f"Error uploading file: {str(e)}")
+                return Response({"message": f"Failed to upload file: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({"message": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
-
+    
 class AnalysisView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        # 这里应该是分析图片的逻辑，我们简单模拟返回一些分析结果
-        # 在实际应用中，这里可以调用机器学习模型或外部API进行图片分析
+        user = request.user
         photo = request.data.get('photo')
         if photo:
-            # 模拟分析过程
+            # Simulate analysis process
             analysis_results = {"result": "positive", "confidence": 95}
-            return Response({"message": "Analysis completed", "analysis_results": analysis_results}, status=status.HTTP_200_OK)
+            # Save record to database
+            record = Record.objects.create(userId=user.id, photo=photo, analysisResults=analysis_results)
+            return Response({"message": "Analysis completed", "analysis_results": analysis_results, "recordId": record.id}, status=status.HTTP_200_OK)
         return Response({"message": "No photo provided"}, status=status.HTTP_400_BAD_REQUEST)

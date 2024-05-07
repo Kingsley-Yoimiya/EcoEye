@@ -4,6 +4,7 @@ import 'package:dotted_border/dotted_border.dart';
 import '../widgets/button.dart'; // 根据实际路径调整
 import '../controllers/upload_and_analysis_controller.dart'; // 根据实际路径调整
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UploadScreen extends StatefulWidget {
@@ -13,8 +14,10 @@ class UploadScreen extends StatefulWidget {
 
 class _UploadScreenState extends State<UploadScreen> {
   final UploadAndAnalysisController _controller = UploadAndAnalysisController();
-  File? _selectedImage;
+  Uint8List? _selectedImage;
+  String? _filename;
   bool _isLoggedIn = false;
+  bool _isUploaded = false;
 
   @override
   void initState() {
@@ -33,14 +36,19 @@ class _UploadScreenState extends State<UploadScreen> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    setState(() {
-      if (image != null) {
-        _selectedImage = File(image.path);
-      }
-    });
+    if (image != null) {
+        Uint8List imageBytes = await image.readAsBytes();
+        setState(() {
+            _selectedImage = imageBytes;
+            _filename = image.name;
+            _isUploaded = false;
+        });
+    }
   }
 
-  Future<void> _uploadImage() async {
+
+
+   Future<void> _uploadImage() async {
     if (!_isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('请先登录')),
@@ -48,17 +56,23 @@ class _UploadScreenState extends State<UploadScreen> {
       return;
     }
 
-    if (_selectedImage != null) {
-      final response = await _controller.uploadPhoto(_selectedImage!);
+    if (_selectedImage != null && _filename != null) {
+      final response = await _controller.uploadPhoto(_selectedImage!, _filename!);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(response)),
       );
+      if (response == "File uploaded successfully") {
+        setState(() {
+          _isUploaded = true;
+        });
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('请先选择一张图片')),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -90,11 +104,15 @@ class _UploadScreenState extends State<UploadScreen> {
                 color: Colors.white,
                 child: Center(
                   child: _selectedImage != null
-                      ? Image.file(_selectedImage!)
+                      ? Image.memory(
+                          _selectedImage!,
+                          fit: BoxFit.cover,
+                        )
                       : Text('No image selected.'),
                 ),
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: CustomButton(
@@ -106,7 +124,7 @@ class _UploadScreenState extends State<UploadScreen> {
               padding: const EdgeInsets.all(8.0),
               child: CustomButton(
                 text: '上传',
-                onPressed: _isLoggedIn ? _uploadImage : () {},
+                onPressed: _isLoggedIn ? _uploadImage : (){},
               ),
             ),
             if (!_isLoggedIn)

@@ -17,7 +17,6 @@ class _UploadScreenState extends State<UploadScreen> {
   Uint8List? _selectedImage;
   String? _filename;
   bool _isLoggedIn = false;
-  bool _isUploaded = false;
   int? _recordId;
 
   @override
@@ -42,7 +41,6 @@ class _UploadScreenState extends State<UploadScreen> {
         setState(() {
             _selectedImage = imageBytes;
             _filename = image.name;
-            _isUploaded = false;
         });
     }
   }
@@ -62,7 +60,6 @@ class _UploadScreenState extends State<UploadScreen> {
       );
       if (response['status'] == "File uploaded successfully") {
         setState(() {
-          _isUploaded = true;
           _recordId = response['recordId'];
         });
         Navigator.push(

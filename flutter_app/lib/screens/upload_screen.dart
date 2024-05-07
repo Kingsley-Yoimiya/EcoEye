@@ -3,9 +3,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
 import '../widgets/button.dart'; // 根据实际路径调整
 import '../controllers/upload_and_analysis_controller.dart'; // 根据实际路径调整
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'result_display_screen.dart';
 
 class UploadScreen extends StatefulWidget {
   @override
@@ -18,6 +18,7 @@ class _UploadScreenState extends State<UploadScreen> {
   String? _filename;
   bool _isLoggedIn = false;
   bool _isUploaded = false;
+  int? _recordId;
 
   @override
   void initState() {
@@ -46,9 +47,7 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-
-
-   Future<void> _uploadImage() async {
+  Future<void> _uploadImage() async {
     if (!_isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('请先登录')),
@@ -59,12 +58,19 @@ class _UploadScreenState extends State<UploadScreen> {
     if (_selectedImage != null && _filename != null) {
       final response = await _controller.uploadPhoto(_selectedImage!, _filename!);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response)),
+        SnackBar(content: Text(response['message'])),
       );
-      if (response == "File uploaded successfully") {
+      if (response['status'] == "File uploaded successfully") {
         setState(() {
           _isUploaded = true;
+          _recordId = response['recordId'];
         });
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResultDisplayScreen(recordId: _recordId),
+          ),
+        );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -72,7 +78,6 @@ class _UploadScreenState extends State<UploadScreen> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

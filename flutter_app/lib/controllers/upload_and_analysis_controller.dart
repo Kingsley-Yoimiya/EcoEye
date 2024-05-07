@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
@@ -15,7 +15,7 @@ class UploadAndAnalysisController {
     return prefs.getString('userId') ?? '';
   }
 
-  Future<String> uploadPhoto(Uint8List photoBytes, String filename) async {
+  Future<Map<String, dynamic>> uploadPhoto(Uint8List photoBytes, String filename) async {
     try {
       String token = await _getToken();
       String userId = await _getUserId();
@@ -27,17 +27,31 @@ class UploadAndAnalysisController {
       
       var response = await request.send();
       if (response.statusCode == 200) {
-        return "File uploaded successfully";
+        var responseBody = await response.stream.bytesToString();
+        var parsedBody = json.decode(responseBody);
+        return {
+          "status": "File uploaded successfully",
+          "message": parsedBody["message"],
+          "recordId": parsedBody["recordId"]
+        };
       } else {
         var responseBody = await response.stream.bytesToString();
-        return "Failed to upload file: $responseBody";
+        return {
+          "status": "Failed to upload file",
+          "message": responseBody,
+          "recordId": null
+        };
       }
     } catch (e) {
-      return "Error occurred: $e";
+      return {
+        "status": "Error occurred",
+        "message": "$e",
+        "recordId": null
+      };
     }
   }
 
-  Future<String> analyzePhoto(Uint8List photoBytes, String filename) async {
+  Future<Map<String, dynamic>> analyzePhoto(Uint8List photoBytes, String filename) async {
     try {
       String token = await _getToken();
       String userId = await _getUserId();
@@ -50,12 +64,25 @@ class UploadAndAnalysisController {
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 200) {
-        return response.body; // 可能需要解析JSON
+        var parsedBody = json.decode(response.body);
+        return {
+          "status": "Analysis successful",
+          "message": parsedBody["message"],
+          "analysisResults": parsedBody["analysis_results"]
+        };
       } else {
-        return "Failed to analyze photo";
+        return {
+          "status": "Failed to analyze photo",
+          "message": response.body,
+          "analysisResults": null
+        };
       }
     } catch (e) {
-      return "Error occurred: $e";
+      return {
+        "status": "Error occurred",
+        "message": "$e",
+        "analysisResults": null
+      };
     }
   }
 }

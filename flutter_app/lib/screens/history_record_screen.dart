@@ -115,7 +115,7 @@ class _HistoryRecordScreenState extends State<HistoryRecordScreen> {
                   context,
                   MaterialPageRoute(
                       builder: (context) =>
-                          ResultDisplayScreen(results: "Sample Result")),
+                          ResultDisplayScreen(recordId: record['recordId'])),
                 );
               }
             },

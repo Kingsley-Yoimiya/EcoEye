@@ -231,7 +231,7 @@ class _MainScreenState extends State<MainScreen> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      ResultDisplayScreen(results: "Sample Result")),
+                                      ResultDisplayScreen(recordId: record['recordId'])),
                             );
                           }
                         },

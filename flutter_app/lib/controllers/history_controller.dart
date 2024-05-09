@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart'; // 引入 intl 包
 
 class HistoryController {
   Future<List<Map<String, dynamic>>> fetchHistory(String userId) async {
@@ -26,11 +27,14 @@ class HistoryController {
           return {
             "recordId": data["recordId"],
             "userId": data["userId"],
-            "timestamp": data["timestamp"],
+            "timestamp": DateFormat('yyyy-MM-dd HH:mm:ss').format(
+                DateTime.parse(data["timestamp"])
+                    .toUtc()
+                    .add(Duration(hours: 8))),
             "status": "Success"
           };
         }).toList();
-        parsedData.sort((a, b) => a["timestamp"].compareTo(b["timestamp"]));
+        parsedData.sort((a, b) => b["timestamp"].compareTo(a["timestamp"]));
         return parsedData;
       } else {
         return [
@@ -53,6 +57,7 @@ class HistoryController {
       ];
     }
   }
+
   // 在 HistoryController 类中添加以下方法
   Future<Map<String, dynamic>> fetchRecordDetail(int recordId) async {
     try {
@@ -73,19 +78,17 @@ class HistoryController {
           "recordId": jsonData["recordId"],
           "photo": jsonData["photo"], // 假设响应中包含照片的URL
           "analysisResults": jsonData["analysisResults"],
-          "timestamp": jsonData["timestamp"],
+          "timestamp": DateFormat('yyyy-MM-dd HH:mm:ss').format(
+              DateTime.parse(jsonData["timestamp"])
+                  .toUtc()
+                  .add(Duration(hours: 8))),
           "status": "Success"
         };
       } else {
-        return {
-          "status": "Failed to load record detail: ${response.body}"
-        };
+        return {"status": "Failed to load record detail: ${response.body}"};
       }
     } catch (e) {
-      return {
-        "status": "Error occurred: $e"
-      };
+      return {"status": "Error occurred: $e"};
     }
   }
-
 }

@@ -13,7 +13,7 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   String? username;
   String? userId;
   final HistoryController _historyController = HistoryController();
@@ -22,7 +22,38 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // 添加监听器
     _loadUserInfo();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // 移除监听器
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // 当应用恢复时，重新加载用户信息和历史记录
+      _loadUserInfo();
+      if (userId != null) {
+        _loadHistory(userId!);
+      } else {
+        // 用户未登录，设置默认的错误记录
+        setState(() {
+          historyList = [
+            {
+              "recordId": 0,
+              "userId": 0,
+              "timestamp": 0,
+              "status": "User not logged in"
+            }
+          ];
+        });
+      }
+    }
   }
 
   Future<void> _loadUserInfo() async {
@@ -50,7 +81,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _loadHistory(String userId) async {
-    List<Map<String, dynamic>> historyData = await _historyController.fetchHistory(userId);
+    List<Map<String, dynamic>> historyData =
+        await _historyController.fetchHistory(userId);
     setState(() {
       historyList = historyData.take(10).toList();
     });
@@ -88,7 +120,7 @@ class _MainScreenState extends State<MainScreen> {
                       MaterialPageRoute(builder: (context) => LoginScreen()),
                     );
                     if (result == "Login successful") {
-                      await _loadUserInfo();  // Reload user info and history
+                      await _loadUserInfo(); // Reload user info and history
                     }
                   },
                 ),
@@ -97,7 +129,8 @@ class _MainScreenState extends State<MainScreen> {
                   onPressed: () async {
                     await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => RegistrationScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => RegistrationScreen()),
                     );
                   },
                 ),
@@ -126,8 +159,8 @@ class _MainScreenState extends State<MainScreen> {
                         MaterialPageRoute(builder: (context) => UploadScreen()),
                       );
                       if (result == "Login successful") {
-                          await _loadUserInfo();  // Reload user info and history
-                        }
+                        await _loadUserInfo(); // Reload user info and history
+                      }
                     },
                     child: Text('上传图片！',
                         style: TextStyle(
@@ -201,7 +234,8 @@ class _MainScreenState extends State<MainScreen> {
                             ? Text("${record['timestamp']}")
                             : null,
                         trailing: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: record['status'] == "Success"
                                 ? Colors.green
@@ -230,8 +264,8 @@ class _MainScreenState extends State<MainScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      ResultDisplayScreen(recordId: record['recordId'])),
+                                  builder: (context) => ResultDisplayScreen(
+                                      recordId: record['recordId'])),
                             );
                           }
                         },
@@ -257,7 +291,7 @@ class _MainScreenState extends State<MainScreen> {
     await prefs.clear();
     setState(() {
       username = null;
-      userId = null;  // Clear userId on logout
+      userId = null; // Clear userId on logout
     });
     Navigator.of(context)
         .pushReplacement(MaterialPageRoute(builder: (context) => MainScreen()));

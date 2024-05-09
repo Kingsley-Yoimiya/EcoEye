@@ -49,22 +49,52 @@ class _ResultDisplayScreenState extends State<ResultDisplayScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    // 记录概况小块
+                    // 记录概况小块，添加操作按钮
                     Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: ListTile(
-                        title: Text(
-                          "记录 ID: ${snapshot.data?["recordId"]}",
-                          style: TextStyle(
-                            fontFamily: 'Songti',
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Text(
-                          "时间戳: ${snapshot.data?["timestamp"]}",
-                          style: TextStyle(fontFamily: 'Songti'),
+                      child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              title: Text(
+                                "记录 ID: ${snapshot.data?["recordId"]}",
+                                style: TextStyle(
+                                  fontFamily: 'Songti',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                "时间戳: ${snapshot.data?["timestamp"]}",
+                                style: TextStyle(fontFamily: 'Songti'),
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: <Widget>[
+                                IconButton(
+                                  icon: Icon(Icons.refresh),
+                                  onPressed: () {
+                                    // 实现重新分析功能
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () {
+                                    // 实现删除记录功能
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.lightbulb_outline),
+                                  onPressed: () {
+                                    // 实现获取植物养护建议功能
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),

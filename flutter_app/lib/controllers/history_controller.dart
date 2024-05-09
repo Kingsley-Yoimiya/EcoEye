@@ -53,4 +53,39 @@ class HistoryController {
       ];
     }
   }
+  // 在 HistoryController 类中添加以下方法
+  Future<Map<String, dynamic>> fetchRecordDetail(int recordId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      var response = await http.get(
+        Uri.parse('${ApiService.resultUrl}/$recordId/'), // 确保这是获取单个记录详情的正确URL
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonData = json.decode(response.body);
+        return {
+          "recordId": jsonData["recordId"],
+          "photo": jsonData["photo"], // 假设响应中包含照片的URL
+          "analysisResults": jsonData["analysisResults"],
+          "timestamp": jsonData["timestamp"],
+          "status": "Success"
+        };
+      } else {
+        return {
+          "status": "Failed to load record detail: ${response.body}"
+        };
+      }
+    } catch (e) {
+      return {
+        "status": "Error occurred: $e"
+      };
+    }
+  }
+
 }

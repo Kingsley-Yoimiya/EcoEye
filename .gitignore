@@ -2,5 +2,5 @@
 django_backend/django_backend/__pycache__/__init__.cpython-310.pyc
 .DS_Store
 django_backend/*/migrations/00*.py
-flutter_app/macos/Flutter/GeneratedPluginRegistrant.swift
 *.sqlite3
+django_backend/media/*

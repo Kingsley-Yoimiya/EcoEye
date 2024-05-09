@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'advice_display_screen.dart';
-import 'dart:typed_data';
+import '../controllers/history_controller.dart';
 
 class ResultDisplayScreen extends StatefulWidget {
-  final int? recordId;
+  final int recordId;
 
   ResultDisplayScreen({Key? key, required this.recordId}) : super(key: key);
 
@@ -14,75 +12,41 @@ class ResultDisplayScreen extends StatefulWidget {
 }
 
 class _ResultDisplayScreenState extends State<ResultDisplayScreen> {
-  String? _resultText;
-  Uint8List? _resultImage;
-  bool _isLoading = true;
+  late Future<Map<String, dynamic>> recordDetail;
+  HistoryController _historyController = HistoryController();
 
   @override
   void initState() {
     super.initState();
-    _fetchResult();
-  }
-
-  Future<void> _fetchResult() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // Mocked API request, replace this with your actual API endpoint
-      final response = await http.get(Uri.parse('http://example.com/api/analysis/${widget.recordId}'));
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        setState(() {
-          _resultText = jsonResponse['resultText'];
-          _resultImage = base64.decode(jsonResponse['resultImage']);
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _resultText = 'Failed to retrieve result';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _resultText = 'Error occurred: $e';
-        _isLoading = false;
-      });
-    }
+    recordDetail = _historyController.fetchRecordDetail(widget.recordId);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Analysis Results'),
-        centerTitle: true,
+        title: Text('Record Detail'),
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: recordDetail,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Text("Error: ${snapshot.error}");
+          } else {
+            return ListView(
               children: <Widget>[
-                if (_resultImage != null)
-                  Image.memory(_resultImage!, fit: BoxFit.cover),
-                if (_resultText != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(_resultText!),
-                  ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AdviceDisplayScreen(advice: 'Keep it in a cool, dry place.')),
-                    );
-                  },
-                  child: Text('View Care Advice'),
-                ),
+                Text("Record ID: ${snapshot.data?["recordId"]}"),
+                Text("Timestamp: ${snapshot.data?["timestamp"]}"),
+                Text("Analysis Results: ${snapshot.data?["analysisResults"]}"),
+                // 显示照片，假设是通过URL访问的
+                Image.network(snapshot.data?["photo"]),
               ],
-            ),
+            );
+          }
+        },
+      ),
     );
   }
 }

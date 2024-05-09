@@ -22,7 +22,11 @@ class UploadView(APIView):
             try:
                 valid_filename = get_valid_filename(file.name)
                 file_name = default_storage.save(valid_filename, file)
-                record = Record.objects.create(userId="1223", photo=file_name, timestamp=timezone.now())
+                # 使用 request.user 获取当前认证的用户对象
+                user = request.user
+                # 假设 User 模型的 ID 是我们需要的 userId
+                userId = user.id
+                record = Record.objects.create(userId=str(userId), photo=file_name, timestamp=timezone.now())
                 return Response({"message": "File uploaded successfully", "file": file_name, "recordId": record.id}, status=status.HTTP_200_OK)
             except Exception as e:
                 logger.error(f"Error uploading file: {str(e)}")

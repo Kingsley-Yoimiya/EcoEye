@@ -25,7 +25,15 @@ class _ResultDisplayScreenState extends State<ResultDisplayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Record Detail'),
+        title: Text(
+          '记录详情',
+          style: TextStyle(
+            fontFamily: 'Kaiti',
+            fontWeight: FontWeight.bold,
+            fontSize: 23,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: recordDetail,
@@ -35,14 +43,62 @@ class _ResultDisplayScreenState extends State<ResultDisplayScreen> {
           } else if (snapshot.hasError) {
             return Text("Error: ${snapshot.error}");
           } else {
-            return ListView(
-              children: <Widget>[
-                Text("Record ID: ${snapshot.data?["recordId"]}"),
-                Text("Timestamp: ${snapshot.data?["timestamp"]}"),
-                Text("Analysis Results: ${snapshot.data?["analysisResults"]}"),
-                // 显示照片，假设是通过URL访问的
-                Image.network(snapshot.data?["photo"]),
-              ],
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    // 记录概况小块
+                    Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          "记录 ID: ${snapshot.data?["recordId"]}",
+                          style: TextStyle(
+                            fontFamily: 'Songti',
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "时间戳: ${snapshot.data?["timestamp"]}",
+                          style: TextStyle(fontFamily: 'Songti'),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    // 分析结果小块
+                    Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          "分析结果: ${snapshot.data?["analysisResults"]}",
+                          style: TextStyle(fontFamily: 'Songti'),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    // 图片小块
+                    snapshot.data?["photo"] != null
+                        ? Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(snapshot.data!["photo"],
+                                  fit: BoxFit.cover),
+                            ),
+                          )
+                        : SizedBox(),
+                  ],
+                ),
+              ),
             );
           }
         },

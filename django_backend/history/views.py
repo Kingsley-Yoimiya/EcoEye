@@ -43,12 +43,12 @@ class ResultView(APIView):
                 "resultImage": self._build_full_photo_url(request, record.photo.name),
                 "analysisResults": {},  # 示例为空的分析结果
             }
-            record.analysisResults = example_analysis_results
+            record.analysisResults = example_analysis_results["resultText"]
             record.save()
             return Response({
                 "recordId": record.id,
                 "photo": example_analysis_results["resultImage"],
-                "analysisResults": example_analysis_results["analysisResults"],
+                "analysisResults": example_analysis_results["resultText"],
                 "timestamp": record.timestamp.isoformat(),
                 "status": "Success"
             }, status=status.HTTP_200_OK)

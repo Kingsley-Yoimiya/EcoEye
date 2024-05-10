@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../controllers/history_controller.dart';
+import '../screens/advice_display_screen.dart';
 
 class ResultDisplayScreen extends StatefulWidget {
   final int recordId;
@@ -76,20 +77,54 @@ class _ResultDisplayScreenState extends State<ResultDisplayScreen> {
                               children: <Widget>[
                                 IconButton(
                                   icon: Icon(Icons.refresh),
-                                  onPressed: () {
-                                    // 实现重新分析功能
+                                  onPressed: () async {
+                                    var result = await _historyController
+                                        .reanalyzeRecord(widget.recordId);
+                                    if (result["status"] == "Success") {
+                                      // 可以选择重新加载记录详情或者直接更新界面
+                                      setState(() {
+                                        recordDetail = Future.value(result);
+                                      });
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(content: Text("重新分析成功")),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(result["status"])),
+                                      );
+                                    }
                                   },
                                 ),
                                 IconButton(
                                   icon: Icon(Icons.delete),
-                                  onPressed: () {
-                                    // 实现删除记录功能
+                                  onPressed: () async {
+                                    String message = await _historyController
+                                        .deleteRecord(widget.recordId);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(message)),
+                                    );
+                                    if (message ==
+                                        "Record deleted successfully") {
+                                      // 删除成功后，返回到上一个界面或者主界面
+                                      Navigator.pop(context);
+                                    }
                                   },
                                 ),
                                 IconButton(
                                   icon: Icon(Icons.lightbulb_outline),
                                   onPressed: () {
-                                    // 实现获取植物养护建议功能
+                                    // 使用 Navigator 导向 AdviceDisplayScreen，并传递 recordId
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AdviceDisplayScreen(
+                                                recordId: widget.recordId),
+                                      ),
+                                    );
                                   },
                                 ),
                               ],

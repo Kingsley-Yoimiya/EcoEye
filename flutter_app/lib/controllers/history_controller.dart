@@ -91,4 +91,85 @@ class HistoryController {
       return {"status": "Error occurred: $e"};
     }
   }
+
+  Future<String> deleteRecord(int recordId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      var response = await http.delete(
+        Uri.parse('${ApiService.deleteUrl}/$recordId/'), // 使用正确的 URL
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      );
+
+      if (response.statusCode == 204) {
+        // HTTP 204 No Content 表示成功删除
+        return "Record deleted successfully";
+      } else {
+        return "Failed to delete record: ${response.body}";
+      }
+    } catch (e) {
+      return "Error occurred: $e";
+    }
+  }
+
+  Future<Map<String, dynamic>> reanalyzeRecord(int recordId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      var response = await http.put(
+        Uri.parse('${ApiService.reanalyzeUrl}/$recordId/'), // 使用正确的 URL
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonData = json.decode(response.body);
+        return {
+          "recordId": jsonData["recordId"],
+          "photo": jsonData["photo"], // 假设响应中包含照片的URL
+          "analysisResults": jsonData["analysisResults"],
+          "timestamp": DateFormat('yyyy-MM-dd HH:mm:ss').format(
+              DateTime.parse(jsonData["timestamp"])
+                  .toUtc()
+                  .add(Duration(hours: 8))),
+          "status": "Success"
+        };
+      } else {
+        return {"status": "Failed to reanalyze record: ${response.body}"};
+      }
+    } catch (e) {
+      return {"status": "Error occurred: $e"};
+    }
+  }
+
+  Future<String> fetchAdvice(int recordId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      var response = await http.get(
+        Uri.parse('${ApiService.adviceUrl}/$recordId/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonData = json.decode(response.body);
+        return jsonData["adviceText"]; // 假设后端返回的JSON对象中包含adviceText字段
+      } else {
+        return "Failed to load advice: ${response.body}";
+      }
+    } catch (e) {
+      return "Error occurred: $e";
+    }
+  }
 }

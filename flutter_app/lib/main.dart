@@ -26,8 +26,12 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegistrationScreen(),
         '/upload': (context) => UploadScreen(),
-        '/result': (context) => ResultDisplayScreen(recordId: 0,), // You need to adjust this according to how you plan to pass results
-        '/advice': (context) => AdviceDisplayScreen(advice: 'Sample Advice'), // Adjust based on how you pass advice
+        '/result': (context) => ResultDisplayScreen(
+              recordId: 0,
+            ), // You need to adjust this according to how you plan to pass results
+        '/advice': (context) => AdviceDisplayScreen(
+              recordId: 0,
+            ), // Adjust based on how you pass advice
         '/history': (context) => HistoryRecordScreen(),
         '/share': (context) => ShareScreen(),
       },

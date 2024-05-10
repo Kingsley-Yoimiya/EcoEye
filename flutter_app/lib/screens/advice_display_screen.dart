@@ -24,7 +24,15 @@ class _AdviceDisplayScreenState extends State<AdviceDisplayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Care Advice'),
+        title: Text(
+          'Care Advice',
+          style: TextStyle(
+            fontFamily: 'Kaiti',
+            fontWeight: FontWeight.bold,
+            fontSize: 23,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: FutureBuilder<String>(
         future: advice,
@@ -32,11 +40,33 @@ class _AdviceDisplayScreenState extends State<AdviceDisplayScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Text("Error: ${snapshot.error}");
+            return Center(
+              child: Text(
+                "Error: ${snapshot.error}",
+                style: TextStyle(
+                  fontFamily: 'Songti',
+                  fontSize: 18,
+                ),
+              ),
+            );
           } else {
             return Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(snapshot.data ?? "No advice available"),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  snapshot.data ?? "No advice available",
+                  style: TextStyle(
+                    fontFamily: 'Songti',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
             );
           }
         },

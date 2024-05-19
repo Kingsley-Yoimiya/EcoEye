@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras import backend as K
 from sklearn.feature_selection import SelectKBest, f_regression

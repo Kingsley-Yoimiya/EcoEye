@@ -5,48 +5,53 @@ from tensorflow.keras.models import load_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.impute import SimpleImputer
+import keras_cv
 
-class R2Loss(tf.keras.losses.Loss):
+from keras import ops
+import keras
+
+class R2Loss(keras.losses.Loss):
     def __init__(self, use_mask=False, name="r2_loss"):
         super().__init__(name=name)
         self.use_mask = use_mask
 
     def call(self, y_true, y_pred):
         if self.use_mask:
-            mask = tf.not_equal(y_true, -1)
-            y_true = tf.where(mask, y_true, 0.0)
-            y_pred = tf.where(mask, y_pred, 0.0)
-        SS_res = tf.reduce_sum(tf.square(y_true - y_pred), axis=0)
-        SS_tot = tf.reduce_sum(tf.square(y_true - tf.reduce_mean(y_true, axis=0)), axis=0)
-        r2_loss = SS_res / (SS_tot + 1e-6)
-        return tf.reduce_mean(r2_loss)
-
-class R2Metric(tf.keras.metrics.Metric):
+            mask = (y_true != -1)
+            y_true = ops.where(mask, y_true, 0.0)
+            y_pred = ops.where(mask, y_pred, 0.0)
+        SS_res = ops.sum(ops.square(y_true - y_pred), axis=0)  # (B, C) -> (C,)
+        SS_tot = ops.sum(ops.square(y_true - ops.mean(y_true, axis=0)), axis=0)  # (B, C) -> (C,)
+        r2_loss = SS_res / (SS_tot + 1e-6)  # (C,)
+        return ops.mean(r2_loss)  # ()
+    
+class R2Metric(keras.metrics.Metric):
     def __init__(self, name="r2", **kwargs):
         super(R2Metric, self).__init__(name=name, **kwargs)
         self.SS_res = self.add_weight(name='SS_res', shape=(6,), initializer='zeros')
-        self.SS_tot = self.add_weight(name='SS_tot', shape=(6,), initializer='zeros')
+        self.SS_tot = self.add_weight(name='SS_tot', shape=(6,) ,initializer='zeros')
         self.num_samples = self.add_weight(name='num_samples', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
-        SS_res = tf.reduce_sum(tf.square(y_true - y_pred), axis=0)
-        SS_tot = tf.reduce_sum(tf.square(y_true - tf.reduce_mean(y_true, axis=0)), axis=0)
+        SS_res = ops.sum(ops.square(y_true - y_pred), axis=0)
+        SS_tot = ops.sum(ops.square(y_true - ops.mean(y_true, axis=0)), axis=0)
         self.SS_res.assign_add(SS_res)
         self.SS_tot.assign_add(SS_tot)
-        self.num_samples.assign_add(tf.cast(tf.shape(y_true)[0], "float32"))
+        self.num_samples.assign_add(ops.cast(ops.shape(y_true)[0], "float32"))
 
     def result(self):
         r2 = 1 - self.SS_res / (self.SS_tot + 1e-6)
-        return tf.reduce_mean(r2)
+        return ops.mean(r2)
 
     def reset_states(self):
-        self.SS_res.assign(0)
-        self.SS_tot.assign(0)
+        self.total_SS_res.assign(0)
+        self.total_SS_tot.assign(0)
         self.num_samples.assign(0)
 
+# %%
 class TransformerEncoderBlock(tf.keras.layers.Layer):
-    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1, **kwargs):
-        super(TransformerEncoderBlock, self).__init__(**kwargs)
+    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
+        super(TransformerEncoderBlock, self).__init__()
         self.att = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
         self.ffn = tf.keras.Sequential(
             [tf.keras.layers.Dense(ff_dim, activation="relu"), tf.keras.layers.Dense(embed_dim),]
@@ -121,41 +126,66 @@ test_features = mean_features.values.reshape(1, -1)
 test_features = scaler.transform(test_features)
 
 def build_model():
-    img_input = tf.keras.Input(shape=(*CFG.image_size, 3), name="images")
-    feat_input = tf.keras.Input(shape=(len(top_features),), name="features")
+    img_input = keras.Input(shape=(*CFG.image_size, 3), name="images")
+    feat_input = keras.Input(shape=(len(top_features),), name="features")
 
-    backbone = tf.keras.applications.EfficientNetV2B2(include_top=False, input_shape=(*CFG.image_size, 3))
-    x1 = backbone(img_input, training=False)
-    x1 = tf.keras.layers.GlobalAveragePooling2D()(x1)
-    x1 = tf.keras.layers.Dense(64 * 32)(x1)
-    x1 = tf.keras.layers.Reshape((32, 64))(x1)
-    transformer_block = TransformerEncoderBlock(embed_dim=64, num_heads=8, ff_dim=512)
+    # Branch for image input
+    backbone = keras_cv.models.EfficientNetV2Backbone.from_preset(
+        "efficientnetv2_b2_imagenet"
+    )
+    #keras_cv.models.ResNetV2Backbone.from_preset("resnet50_v2_imagenet")
+    # change！！
+    x1 = backbone(img_input)
+    x1 = keras.layers.GlobalAveragePooling2D()(x1)
+    x1 = keras.layers.Dropout(0.2)(x1)
+
+    # 添加Transformer编码器
+    # 假设 embedding_dim = 64
+    embedding_dim = 64
+    sequence_length = 32  # 基于我们的选择，这里是一个示例值
+
+    # 使用 Dense 层而不是 Reshape 来转换特征维度
+    x1 = backbone(img_input)
+    x1 = keras.layers.GlobalAveragePooling2D()(x1)
+    x1 = keras.layers.Dense(embedding_dim * sequence_length)(x1)  # 调整维度
+    x1 = keras.layers.Reshape((sequence_length, embedding_dim))(x1)  # 转换为序列
+
+    transformer_block = TransformerEncoderBlock(embed_dim=embedding_dim, num_heads=8, ff_dim=512)
     x1 = transformer_block(x1)
-    x1 = tf.keras.layers.Flatten()(x1)
+    x1 = keras.layers.Flatten()(x1)  # 如果需要，根据后续结构调整
 
-    x2 = tf.keras.layers.Dense(326, activation="selu")(feat_input)
-    x2 = tf.keras.layers.Dense(128, activation="selu")(x2)
-    x2 = tf.keras.layers.Dense(64, activation="selu")(x2)
-    x2 = tf.keras.layers.Dropout(0.1)(x2)
 
-    concat = tf.keras.layers.Concatenate()([x1, x2])
 
-    out1 = tf.keras.layers.Dense(CFG.num_classes, activation=None, name="head")(concat)
-    out2 = tf.keras.layers.Dense(CFG.aux_num_classes, activation="relu", name="aux_head")(concat)
-    out = {"head": out1, "aux_head": out2}
+    # Branch for tabular/feature input
+    x2 = keras.layers.Dense(326, activation="selu")(feat_input)
+    x2 = keras.layers.Dense(128, activation="selu")(x2)  # 新增的Dense层！
+    x2 = keras.layers.Dense(64, activation="selu")(x2)
+    x2 = keras.layers.Dropout(0.1)(x2)
 
-    model = tf.keras.models.Model([img_input, feat_input], out)
+    # Concatenate both branches
+    concat = keras.layers.Concatenate()([x1, x2])
 
+    # Output layer
+    out1 = keras.layers.Dense(CFG.num_classes, activation=None, name="head")(concat)
+    out2 = keras.layers.Dense(CFG.aux_num_classes, activation="relu", name="aux_head")(concat)
+    out = {"head": out1, "aux_head":out2}
+
+    # Build model
+    model = keras.models.Model([img_input, feat_input], out)
+
+    # Compile the model
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
+        optimizer=keras.optimizers.Adam(learning_rate=1e-4),
         loss={
             "head": R2Loss(use_mask=False),
-            "aux_head": R2Loss(use_mask=True),
+            "aux_head": R2Loss(use_mask=True), # use_mask to ignore `NaN` auxiliary labels
         },
-        loss_weights={"head": 1.0, "aux_head": 0.3},
-        metrics={"head": R2Metric()},
+        loss_weights={"head": 1.0, "aux_head": 0.3},  # more weight to main task
+        metrics={"head": R2Metric()}, # evaluation metric only on main task
     )
 
+    # Model Summary
+    model.summary()
     return model
 
 # 构建模型并加载权重

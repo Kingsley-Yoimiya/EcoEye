@@ -3,8 +3,12 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras import backend as K
 from sklearn.feature_selection import SelectKBest, f_regression
+import keras
+
+# 查看版本
+print("TensorFlow version:", tf.__version__)
+print("Keras version:", keras.__version__)
 
 # 自定义 R2Loss
 class R2Loss(tf.keras.losses.Loss):
@@ -14,37 +18,58 @@ class R2Loss(tf.keras.losses.Loss):
 
     def call(self, y_true, y_pred):
         if self.use_mask:
-            mask = K.not_equal(y_true, -1)
-            y_true = K.switch(mask, y_true, 0.0)
-            y_pred = K.switch(mask, y_pred, 0.0)
-        SS_res = K.sum(K.square(y_true - y_pred), axis=0)  # (B, C) -> (C,)
-        SS_tot = K.sum(K.square(y_true - K.mean(y_true, axis=0)), axis=0)  # (B, C) -> (C,)
+            mask = tf.not_equal(y_true, -1)
+            y_true = tf.where(mask, y_true, 0.0)
+            y_pred = tf.where(mask, y_pred, 0.0)
+        SS_res = tf.reduce_sum(tf.square(y_true - y_pred), axis=0)  # (B, C) -> (C,)
+        SS_tot = tf.reduce_sum(tf.square(y_true - tf.reduce_mean(y_true, axis=0)), axis=0)  # (B, C) -> (C,)
         r2_loss = SS_res / (SS_tot + 1e-6)  # (C,)
-        return K.mean(r2_loss)  # ()
+        return tf.reduce_mean(r2_loss)  # ()
 
 # 自定义 R2Metric
 class R2Metric(tf.keras.metrics.Metric):
     def __init__(self, name="r2", **kwargs):
         super(R2Metric, self).__init__(name=name, **kwargs)
         self.SS_res = self.add_weight(name='SS_res', shape=(6,), initializer='zeros')
-        self.SS_tot = self.add_weight(name='SS_tot', shape=(6,) ,initializer='zeros')
+        self.SS_tot = self.add_weight(name='SS_tot', shape=(6,), initializer='zeros')
         self.num_samples = self.add_weight(name='num_samples', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
-        SS_res = K.sum(K.square(y_true - y_pred), axis=0)
-        SS_tot = K.sum(K.square(y_true - K.mean(y_true, axis=0)), axis=0)
+        SS_res = tf.reduce_sum(tf.square(y_true - y_pred), axis=0)
+        SS_tot = tf.reduce_sum(tf.square(y_true - tf.reduce_mean(y_true, axis=0)), axis=0)
         self.SS_res.assign_add(SS_res)
         self.SS_tot.assign_add(SS_tot)
-        self.num_samples.assign_add(K.cast(K.shape(y_true)[0], "float32"))
+        self.num_samples.assign_add(tf.cast(tf.shape(y_true)[0], "float32"))
 
     def result(self):
         r2 = 1 - self.SS_res / (self.SS_tot + 1e-6)
-        return K.mean(r2)
+        return tf.reduce_mean(r2)
 
     def reset_states(self):
         self.SS_res.assign(0)
         self.SS_tot.assign(0)
         self.num_samples.assign(0)
+
+# 自定义 TransformerEncoderBlock
+class TransformerEncoderBlock(tf.keras.layers.Layer):
+    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1, **kwargs):
+        super(TransformerEncoderBlock, self).__init__(**kwargs)
+        self.att = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
+        self.ffn = tf.keras.Sequential(
+            [tf.keras.layers.Dense(ff_dim, activation="relu"), tf.keras.layers.Dense(embed_dim),]
+        )
+        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.dropout1 = tf.keras.layers.Dropout(rate)
+        self.dropout2 = tf.keras.layers.Dropout(rate)
+
+    def call(self, inputs, training=False):
+        attn_output = self.att(inputs, inputs)
+        attn_output = self.dropout1(attn_output, training=training)
+        out1 = self.layernorm1(inputs + attn_output)
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+        return self.layernorm2(out1 + ffn_output)
 
 # 配置类
 class CFG:
@@ -61,20 +86,24 @@ class CFG:
     fold = 0  # Which fold to set as validation data
     class_names = ['X4_mean', 'X11_mean', 'X18_mean',
                    'X26_mean', 'X50_mean', 'X3112_mean']
-    aux_class_names = list(map(lambda x: x.replace("mean","sd"), class_names))
+    aux_class_names = list(map(lambda x: x.replace("mean", "sd"), class_names))
     num_classes = len(class_names)
     aux_num_classes = len(aux_class_names)
 
 # 加载训练好的模型
-model = load_model("best_model.keras", custom_objects={"R2Loss": R2Loss, "R2Metric": R2Metric})
+model = load_model("best_model.keras", custom_objects={
+    "R2Loss": R2Loss,
+    "R2Metric": R2Metric,
+    "TransformerEncoderBlock": TransformerEncoderBlock
+})
 
 # 加载训练数据以计算辅助参数的平均值
 df = pd.read_csv('train.csv')
 df = df[(df['X4_mean'] > 0) &
-        (df['X11_mean'] < 200) & 
-        (df['X18_mean'] < 70) & 
-        (df['X50_mean'] < 200) & 
-        (df['X26_mean'] < 25000) &                            
+        (df['X11_mean'] < 200) &
+        (df['X18_mean'] < 70) &
+        (df['X50_mean'] < 200) &
+        (df['X26_mean'] < 25000) &
         (df['X3112_mean'] < 300000)]
 
 print("GET DATA")

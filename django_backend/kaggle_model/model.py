@@ -90,12 +90,15 @@ class CFG:
 df = pd.read_csv('train.csv')
 df = df[(df['X4_mean'] > 0) & (df['X11_mean'] < 200) & (df['X18_mean'] < 70) &
         (df['X50_mean'] < 200) & (df['X26_mean'] < 25000) & (df['X3112_mean'] < 300000)]
+df.loc[:, CFG.aux_class_names] = df.loc[:, CFG.aux_class_names].fillna(-1)
+
+#display(df.head(2))
 
 FEATURE_COLS = df.columns[1:-1].tolist()
 
-# 使用 SimpleImputer 填充缺失值
-imputer = SimpleImputer(strategy='mean')
-df[FEATURE_COLS] = imputer.fit_transform(df[FEATURE_COLS])
+# # 使用 SimpleImputer 填充缺失值
+# imputer = SimpleImputer(strategy='mean')
+# df[FEATURE_COLS] = imputer.fit_transform(df[FEATURE_COLS])
 
 all_selected_features = set()
 for target_col in CFG.class_names:
@@ -108,6 +111,12 @@ for target_col in CFG.class_names:
 top_features = list(all_selected_features)
 if 'id' in top_features:
     top_features.remove('id')
+print("\nFinal list of unique features selected across all targets:", top_features, len(top_features))
+
+
+# !!!
+top_features=['SOIL_silt_100.200cm_mean_0.01_deg', 'SOIL_silt_5.15cm_mean_0.01_deg', 'SOIL_sand_15.30cm_mean_0.01_deg', 'SOIL_phh2o_5.15cm_mean_0.01_deg', 'WORLDCLIM_BIO13.BIO14_delta_precipitation_of_wettest_and_dryest_month', 'SOIL_clay_60.100cm_mean_0.01_deg', 'MODIS_2000.2020_monthly_mean_surface_reflectance_band_03_._month_m1', 'WORLDCLIM_BIO4_temperature_seasonality', 'SOIL_silt_15.30cm_mean_0.01_deg', 'SOIL_sand_5.15cm_mean_0.01_deg', 'SOIL_phh2o_60.100cm_mean_0.01_deg', 'SOIL_clay_100.200cm_mean_0.01_deg', 'MODIS_2000.2020_monthly_mean_surface_reflectance_band_02_._month_m9', 'SOIL_clay_30.60cm_mean_0.01_deg', 'SOIL_nitrogen_0.5cm_mean_0.01_deg', 'SOIL_silt_0.5cm_mean_0.01_deg', 'MODIS_2000.2020_monthly_mean_surface_reflectance_band_03_._month_m2', 'WORLDCLIM_BIO12_annual_precipitation', 'SOIL_silt_60.100cm_mean_0.01_deg', 'SOIL_silt_30.60cm_mean_0.01_deg', 'SOIL_phh2o_30.60cm_mean_0.01_deg', 'WORLDCLIM_BIO1_annual_mean_temperature', 'SOIL_clay_0.5cm_mean_0.01_deg', 'SOIL_phh2o_15.30cm_mean_0.01_deg', 'SOIL_sand_0.5cm_mean_0.01_deg', 'SOIL_phh2o_100.200cm_mean_0.01_deg', 'WORLDCLIM_BIO7_temperature_annual_range']
+# !!!
 
 mean_features = df[top_features].mean()
 scaler = StandardScaler()

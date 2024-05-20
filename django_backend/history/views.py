@@ -6,10 +6,10 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Record, Advice
 from .serializers import RecordSerializer, AdviceSerializer
 from rest_framework.authtoken.models import Token
-import base64
 import os
 from django.conf import settings
 from django.utils import timezone
+from kaggle_model.model import predict
 
 class HistoryView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -38,18 +38,18 @@ class ResultView(APIView):
         
         # 检查 analysisResults 字段是否为空
         if not record.analysisResults:
-            # 直接生成示例分析结果，包括图片的完整 URL
-            example_analysis_results = {
-                "resultText": "This is an example analysis result.",
-                "resultImage": self._build_full_photo_url(request, record.photo.name),
-                "analysisResults": {},  # 示例为空的分析结果
-            }
-            record.analysisResults = example_analysis_results["resultText"]
+            file_path = os.path.join(settings.MEDIA_ROOT, record.photo.name)
+            analysis_result = str(predict(file_path))
+            
+            print(analysis_result)
+
+            # 更新记录的分析结果
+            record.analysisResults = {"resultText": analysis_result, "resultImage": self._build_full_photo_url(request, record.photo.name)}
             record.save()
             return Response({
                 "recordId": record.id,
-                "photo": example_analysis_results["resultImage"],
-                "analysisResults": example_analysis_results["resultText"],
+                "photo": record.analysisResults["resultImage"],
+                "analysisResults": record.analysisResults["resultText"],
                 "timestamp": record.timestamp.isoformat(),
                 "status": "Success"
             }, status=status.HTTP_200_OK)
@@ -58,15 +58,12 @@ class ResultView(APIView):
             return Response({
                 "recordId": record.id,
                 "photo": self._build_full_photo_url(request, record.photo.name),
-                "analysisResults": record.analysisResults,
+                "analysisResults": record.analysisResults["resultText"],
                 "timestamp": record.timestamp.isoformat(),
                 "status": "Success"
             }, status=status.HTTP_200_OK)
     
     def _build_full_photo_url(self, request, photo_name):
-        """
-        构建图片的完整 URL。
-        """
         return request.build_absolute_uri(settings.MEDIA_URL + photo_name)
 
 class AdviceView(APIView):
@@ -75,26 +72,21 @@ class AdviceView(APIView):
 
     def get(self, request, recordId):
         user = request.user
-        # 确保令牌匹配用户
+        # Ensure token matches the user
         if not Token.objects.filter(user=user, key=request.auth.key).exists():
             return Response({"message": "Unauthorized access"}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            # 检查记录是否存在
             record = Record.objects.get(id=recordId, userId=user.id)
         except Record.DoesNotExist:
             return Response({"message": "Record not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        # 尝试获取与此记录相关的建议
         advice, created = Advice.objects.get_or_create(record=record, defaults={'adviceText': "This is an example advice text.", 'timestamp': timezone.now()})
-        
-        # 如果建议已经存在但记录有更新，则更新建议
         if not created and record.timestamp > advice.timestamp:
             advice.adviceText = "This is an example advice text."
             advice.timestamp = timezone.now()
             advice.save()
 
-        # 返回相关一系列信息
         return Response({
             "recordId": record.id,
             "adviceText": advice.adviceText,
@@ -123,14 +115,13 @@ class ReanalyzeView(APIView):
         user = request.user
         try:
             record = Record.objects.get(id=recordId, userId=str(user.id))
-            # 假设重新分析的结果
-            new_analysis_result = "This is the new result." + str(timezone.now())
-            record.analysisResults = new_analysis_result
-            record.timestamp = timezone.now()  # 更新时间戳
+            new_analysis_result = str(predict(os.path.join(settings.MEDIA_ROOT, record.photo.name)))
+            record.analysisResults = {"resultText": new_analysis_result, "resultImage": self._build_full_photo_url(request, record.photo.name)}
+            record.timestamp = timezone.now()
             record.save()
             return Response({
                 "recordId": record.id,
-                "analysisResults": new_analysis_result,
+                "analysisResults": record.analysisResults["resultText"],
                 "photo": self._build_full_photo_url(request, record.photo.name),
                 "timestamp": record.timestamp.isoformat(),
                 "status": "Success"

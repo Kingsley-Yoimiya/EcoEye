@@ -87,7 +87,7 @@ class CFG:
     aux_num_classes = len(aux_class_names)
 
 # 加载并处理训练数据以计算辅助参数的平均值
-df = pd.read_csv('train.csv')
+df = pd.read_csv('./kaggle_model/train.csv')
 df = df[(df['X4_mean'] > 0) & (df['X11_mean'] < 200) & (df['X18_mean'] < 70) &
         (df['X50_mean'] < 200) & (df['X26_mean'] < 25000) & (df['X3112_mean'] < 300000)]
 df.loc[:, CFG.aux_class_names] = df.loc[:, CFG.aux_class_names].fillna(-1)
@@ -199,14 +199,14 @@ def build_model():
 
 # 构建模型并加载权重
 model = build_model()
-model.load_weights("best_model.keras")
+model.load_weights("./kaggle_model/best_model.keras")
 
 def predict(image_path):
     test_image = preprocess_image(image_path, CFG.image_size)
     test_input = {"images": np.expand_dims(test_image, axis=0), "features": test_features}
     pred = model.predict(test_input)["head"]
-    return pred
+    return pred.tolist()
 
-test_image_path = "99657241.jpeg"
+test_image_path = "./kaggle_model/99657241.jpeg"
 result = predict(test_image_path)
 print("Predicted traits: ", result)

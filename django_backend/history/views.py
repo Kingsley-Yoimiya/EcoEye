@@ -25,6 +25,24 @@ class HistoryView(APIView):
         serializer = RecordSerializer(records, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+def formalizeRecordText(result):
+    labels = [
+        "X4(木材密度，SSD)",
+        "X11(比叶面积，SLA)",
+        "X18(植物高度)",
+        "X26(种子干质量)",
+        "X50(叶氮含量)",
+        "X3112(叶面积)"
+    ]
+    
+    result_list = result[0]
+    
+    formatted_strings = [f"{labels[i]}: {result_list[i]}" for i in range(len(labels))]
+    
+    print("\n".join(formatted_strings))
+    return "\n".join(formatted_strings)
+
+
 class ResultView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -39,7 +57,7 @@ class ResultView(APIView):
         # 检查 analysisResults 字段是否为空
         if not record.analysisResults:
             file_path = os.path.join(settings.MEDIA_ROOT, record.photo.name)
-            analysis_result = str(predict(file_path))
+            analysis_result = formalizeRecordText(predict(file_path))
             
             print(analysis_result)
 
@@ -115,7 +133,7 @@ class ReanalyzeView(APIView):
         user = request.user
         try:
             record = Record.objects.get(id=recordId, userId=str(user.id))
-            new_analysis_result = str(predict(os.path.join(settings.MEDIA_ROOT, record.photo.name)))
+            new_analysis_result = formalizeRecordText(predict(os.path.join(settings.MEDIA_ROOT, record.photo.name)))
             record.analysisResults = {"resultText": new_analysis_result, "resultImage": self._build_full_photo_url(request, record.photo.name)}
             record.timestamp = timezone.now()
             record.save()

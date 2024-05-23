@@ -10,7 +10,6 @@ class HistoryController {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
 
-      // Ensure the URL includes userId
       var response = await http.get(
         Uri.parse('${ApiService.historyUrl}/$userId/'),
         headers: {
@@ -18,11 +17,18 @@ class HistoryController {
           'Authorization': 'Token $token',
         },
       );
-      print("Response status: ${response.statusCode}");
-      //print("Response body: ${response.body}");
+
+      // 打印原始响应内容
+      print('Raw response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        List<dynamic> jsonData = json.decode(response.body);
+        // 将响应的body转换为UTF-8编码
+        var utf8Body = utf8.decode(response.bodyBytes);
+
+        // 打印UTF-8编码后的内容
+        print('UTF-8 decoded body: $utf8Body');
+
+        List<dynamic> jsonData = json.decode(utf8Body);
         List<Map<String, dynamic>> parsedData = jsonData.map((data) {
           return {
             "recordId": data["recordId"],
@@ -37,6 +43,7 @@ class HistoryController {
         parsedData.sort((a, b) => b["timestamp"].compareTo(a["timestamp"]));
         return parsedData;
       } else {
+        print('Failed to load history: ${response.body}');
         return [
           {
             "recordId": 0,
@@ -47,6 +54,7 @@ class HistoryController {
         ];
       }
     } catch (e) {
+      print('Error occurred: $e');
       return [
         {
           "recordId": 114,
@@ -58,25 +66,37 @@ class HistoryController {
     }
   }
 
-  // 在 HistoryController 类中添加以下方法
   Future<Map<String, dynamic>> fetchRecordDetail(int recordId) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
 
       var response = await http.get(
-        Uri.parse('${ApiService.resultUrl}/$recordId/'), // 确保这是获取单个记录详情的正确URL
+        Uri.parse('${ApiService.resultUrl}/$recordId/'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Token $token',
         },
       );
 
+      // 打印原始响应内容
+      print('Raw response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        Map<String, dynamic> jsonData = json.decode(response.body);
+        // 将响应的body转换为UTF-8编码
+        var utf8Body = utf8.decode(response.bodyBytes);
+
+        // 打印UTF-8编码后的内容
+        print('UTF-8 decoded body: $utf8Body');
+
+        Map<String, dynamic> jsonData = json.decode(utf8Body);
+
+        // 打印解析后的JSON数据
+        print('JSON Data: $jsonData');
+
         return {
           "recordId": jsonData["recordId"],
-          "photo": jsonData["photo"], // 假设响应中包含照片的URL
+          "photo": jsonData["photo"],
           "analysisResults": jsonData["analysisResults"],
           "timestamp": DateFormat('yyyy-MM-dd HH:mm:ss').format(
               DateTime.parse(jsonData["timestamp"])
@@ -85,9 +105,11 @@ class HistoryController {
           "status": "Success"
         };
       } else {
+        print('Failed to load record detail: ${response.body}');
         return {"status": "Failed to load record detail: ${response.body}"};
       }
     } catch (e) {
+      print('Error occurred: $e');
       return {"status": "Error occurred: $e"};
     }
   }
@@ -98,20 +120,24 @@ class HistoryController {
       String? token = prefs.getString('token');
 
       var response = await http.delete(
-        Uri.parse('${ApiService.deleteUrl}/$recordId/'), // 使用正确的 URL
+        Uri.parse('${ApiService.deleteUrl}/$recordId/'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Token $token',
         },
       );
 
+      // 打印原始响应内容
+      print('Raw response body: ${response.body}');
+
       if (response.statusCode == 204) {
-        // HTTP 204 No Content 表示成功删除
         return "Record deleted successfully";
       } else {
+        print('Failed to delete record: ${response.body}');
         return "Failed to delete record: ${response.body}";
       }
     } catch (e) {
+      print('Error occurred: $e');
       return "Error occurred: $e";
     }
   }
@@ -122,18 +148,31 @@ class HistoryController {
       String? token = prefs.getString('token');
 
       var response = await http.put(
-        Uri.parse('${ApiService.reanalyzeUrl}/$recordId/'), // 使用正确的 URL
+        Uri.parse('${ApiService.reanalyzeUrl}/$recordId/'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Token $token',
         },
       );
 
+      // 打印原始响应内容
+      print('Raw response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        Map<String, dynamic> jsonData = json.decode(response.body);
+        // 将响应的body转换为UTF-8编码
+        var utf8Body = utf8.decode(response.bodyBytes);
+
+        // 打印UTF-8编码后的内容
+        print('UTF-8 decoded body: $utf8Body');
+
+        Map<String, dynamic> jsonData = json.decode(utf8Body);
+
+        // 打印解析后的JSON数据
+        print('JSON Data: $jsonData');
+
         return {
           "recordId": jsonData["recordId"],
-          "photo": jsonData["photo"], // 假设响应中包含照片的URL
+          "photo": jsonData["photo"],
           "analysisResults": jsonData["analysisResults"],
           "timestamp": DateFormat('yyyy-MM-dd HH:mm:ss').format(
               DateTime.parse(jsonData["timestamp"])
@@ -142,9 +181,11 @@ class HistoryController {
           "status": "Success"
         };
       } else {
+        print('Failed to reanalyze record: ${response.body}');
         return {"status": "Failed to reanalyze record: ${response.body}"};
       }
     } catch (e) {
+      print('Error occurred: $e');
       return {"status": "Error occurred: $e"};
     }
   }
@@ -162,13 +203,28 @@ class HistoryController {
         },
       );
 
+      // 打印原始响应内容
+      print('Raw response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        Map<String, dynamic> jsonData = json.decode(response.body);
+        // 将响应的body转换为UTF-8编码
+        var utf8Body = utf8.decode(response.bodyBytes);
+
+        // 打印UTF-8编码后的内容
+        print('UTF-8 decoded body: $utf8Body');
+
+        Map<String, dynamic> jsonData = json.decode(utf8Body);
+
+        // 打印解析后的JSON数据
+        print('JSON Data: $jsonData');
+
         return jsonData["adviceText"]; // 假设后端返回的JSON对象中包含adviceText字段
       } else {
+        print('Failed to load advice: ${response.body}');
         return "Failed to load advice: ${response.body}";
       }
     } catch (e) {
+      print('Error occurred: $e');
       return "Error occurred: $e";
     }
   }

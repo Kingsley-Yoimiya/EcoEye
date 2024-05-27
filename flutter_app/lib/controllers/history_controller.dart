@@ -215,10 +215,16 @@ class HistoryController {
 
         Map<String, dynamic> jsonData = json.decode(utf8Body);
 
-        // 打印解析后的JSON数据
-        print('JSON Data: $jsonData');
+        String adviceText = jsonData["adviceText"];
+        var adviceJson = jsonDecode(adviceText);
 
-        return jsonData["adviceText"]; // 假设后端返回的JSON对象中包含adviceText字段
+        // 格式化 JSON 数据
+        String formattedAdvice = formatAdviceJson(adviceJson);
+
+        // 打印解析后的JSON数据
+        print('Formatted Advice: $formattedAdvice');
+
+        return formattedAdvice;
       } else {
         print('Failed to load advice: ${response.body}');
         return "Failed to load advice: ${response.body}";
@@ -227,5 +233,22 @@ class HistoryController {
       print('Error occurred: $e');
       return "Error occurred: $e";
     }
+  }
+
+  String formatAdviceJson(Map<String, dynamic> adviceJson) {
+    StringBuffer buffer = StringBuffer();
+    buffer.writeln("建议列表：");
+    for (var advice in adviceJson['advice_list']['advices']) {
+      buffer.writeln("星级: ${advice['star']}");
+      buffer.writeln("建议: ${advice['content']}");
+      buffer.writeln("目的: ${advice['purpose']}");
+      buffer.writeln("--------");
+    }
+    buffer.writeln("改善结果：");
+    buffer.writeln("主要改善: ${adviceJson['result']['major_improvement']}");
+    buffer.writeln(
+        "详细改善情况: ${adviceJson['result']['improvement_details'].join(', ')}");
+
+    return buffer.toString();
   }
 }

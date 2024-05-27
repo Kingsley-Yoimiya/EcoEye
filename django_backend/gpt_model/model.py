@@ -90,4 +90,4 @@ def predict_gpt(image_path, analysis_result):
 """
   result = (structured_llm.invoke(prompt))
   print(result)
-  return str(result)
+  return str(result.json())

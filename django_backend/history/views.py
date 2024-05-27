@@ -10,6 +10,7 @@ import os
 from django.conf import settings
 from django.utils import timezone
 from kaggle_model.model import predict
+from gpt_model.model import predict_gpt
 
 class HistoryView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -99,9 +100,12 @@ class AdviceView(APIView):
         except Record.DoesNotExist:
             return Response({"message": "Record not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        advice, created = Advice.objects.get_or_create(record=record, defaults={'adviceText': "This is an example advice text.", 'timestamp': timezone.now()})
-        if not created and record.timestamp > advice.timestamp:
-            advice.adviceText = "This is an example advice text."
+        advice, created = Advice.objects.get_or_create(record=record)
+        if not created or record.timestamp > advice.timestamp:
+            analysis_result = record.analysisResults
+            image_path = record.photo.path
+            prediction = predict_gpt(image_path, analysis_result)
+            advice.adviceText = prediction
             advice.timestamp = timezone.now()
             advice.save()
 

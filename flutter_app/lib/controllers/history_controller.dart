@@ -190,7 +190,7 @@ class HistoryController {
     }
   }
 
-  Future<String> fetchAdvice(int recordId) async {
+  Future<Map<String, dynamic>> fetchAdvice(int recordId) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
@@ -218,37 +218,17 @@ class HistoryController {
         String adviceText = jsonData["adviceText"];
         var adviceJson = jsonDecode(adviceText);
 
-        // 格式化 JSON 数据
-        String formattedAdvice = formatAdviceJson(adviceJson);
-
         // 打印解析后的JSON数据
-        print('Formatted Advice: $formattedAdvice');
+        print('Formatted Advice JSON: $adviceJson');
 
-        return formattedAdvice;
+        return adviceJson;
       } else {
         print('Failed to load advice: ${response.body}');
-        return "Failed to load advice: ${response.body}";
+        return {"error": "Failed to load advice: ${response.body}"};
       }
     } catch (e) {
       print('Error occurred: $e');
-      return "Error occurred: $e";
+      return {"error": "Error occurred: $e"};
     }
-  }
-
-  String formatAdviceJson(Map<String, dynamic> adviceJson) {
-    StringBuffer buffer = StringBuffer();
-    buffer.writeln("建议列表：");
-    for (var advice in adviceJson['advice_list']['advices']) {
-      buffer.writeln("星级: ${advice['star']}");
-      buffer.writeln("建议: ${advice['content']}");
-      buffer.writeln("目的: ${advice['purpose']}");
-      buffer.writeln("--------");
-    }
-    buffer.writeln("改善结果：");
-    buffer.writeln("主要改善: ${adviceJson['result']['major_improvement']}");
-    buffer.writeln(
-        "详细改善情况: ${adviceJson['result']['improvement_details'].join(', ')}");
-
-    return buffer.toString();
   }
 }

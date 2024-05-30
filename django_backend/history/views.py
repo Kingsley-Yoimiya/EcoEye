@@ -101,7 +101,8 @@ class AdviceView(APIView):
             return Response({"message": "Record not found"}, status=status.HTTP_404_NOT_FOUND)
         
         advice, created = Advice.objects.get_or_create(record=record)
-        if not created or record.timestamp > advice.timestamp:
+        print("GET: :", created, record.timestamp, advice.timestamp, record.timestamp > advice.timestamp)
+        if created or record.timestamp > advice.timestamp:
             analysis_result = record.analysisResults
             image_path = record.photo.path
             prediction = predict_gpt(image_path, analysis_result)

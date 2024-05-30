@@ -86,7 +86,17 @@ class _AdviceDisplayScreenState extends State<AdviceDisplayScreen> {
                                 Text(
                                   '⭐️' * advice['star'] +
                                       ' ' +
-                                      advice['content'],
+                                      advice['summary'],
+                                  style: TextStyle(
+                                    fontFamily: 'Songti',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  advice['content'],
                                   style: TextStyle(
                                     fontFamily: 'Songti',
                                     fontWeight: FontWeight.bold,

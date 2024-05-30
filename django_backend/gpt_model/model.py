@@ -22,8 +22,9 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 class Advice(BaseModel):
     """用户建议。"""
     star: int = Field(description="建议的星级评分，范围从1到5", ge=1, le=5)
-    content: str = Field(description="建议的内容")
-    purpose: str = Field(description="建议的设计考虑和目的")
+    summary: str = Field(description="建议的简要总结")
+    content: str = Field(description="建议的详细内容和注意事项")
+    purpose: str = Field(description="建议的设计考虑和目的（注意结合数据和植物图片）")
 
 class AdviceList(BaseModel):
     """建议列表。"""
@@ -32,7 +33,7 @@ class AdviceList(BaseModel):
 class Advice2(BaseModel):
     """改善结果。"""
     major_improvement: str = Field(description="最大的改善方面，一个很简洁的文本")
-    improvement_details: list[str] = Field(description="具体改善情况的列表，每个元素都是文字，表示改善方面")
+    improvement_details: list[str] = Field(description="具体改善情况的列表，每个元素都是文字，表示改善方面（注意结合数据和植物图片）")
 
 class FinalAdvice(BaseModel):
     advice_list: AdviceList

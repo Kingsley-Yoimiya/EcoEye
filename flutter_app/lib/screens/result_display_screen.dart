@@ -125,22 +125,87 @@ class _ResultDisplayScreenState extends State<ResultDisplayScreen> {
   }
 
   Widget _buildAnalysisResultCard(String? analysisResults) {
+    if (analysisResults == null) return SizedBox();
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
         padding: EdgeInsets.all(8.0),
-        child: Text(
-          "分析结果: \n $analysisResults",
-          style: TextStyle(
-            fontFamily: 'Songti',
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: _parseAnalysisResults(analysisResults),
         ),
       ),
     );
+  }
+
+  List<Widget> _parseAnalysisResults(String analysisResults) {
+    List<Widget> result = [];
+    List<String> lines = analysisResults.split("\n");
+
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      if (line.trim().isEmpty) continue;
+
+      result.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Text(
+            line,
+            style: TextStyle(
+              fontFamily: 'Songti',
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+        ),
+      );
+
+      // 生成附注
+      String note = _getNoteForLine(line);
+      result.add(
+        Container(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16.0, bottom: 8.0),
+            child: Text(
+              note,
+              style: TextStyle(
+                fontFamily: 'Songti',
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // 添加分割线
+      if (i < lines.length - 1) {
+        result.add(Divider());
+      }
+    }
+
+    return result;
+  }
+
+  String _getNoteForLine(String line) {
+    if (line.contains("X4")) {
+      return "木材密度反映了植物的结构和功能特性。";
+    } else if (line.contains("X11")) {
+      return "比叶面积反映了叶片的投资回报策略。";
+    } else if (line.contains("X18")) {
+      return "植物高度是植物竞争能力的重要指标。";
+    } else if (line.contains("X26")) {
+      return "种子干质量反映了植物的繁殖策略和适应性。";
+    } else if (line.contains("X50")) {
+      return "叶氮含量是衡量植物光合作用潜力的重要指标。";
+    } else if (line.contains("X3112")) {
+      return "叶面积影响植物的光捕获能力和蒸腾速率。";
+    }
+    return "";
   }
 
   Widget _buildPhotoCard(String? photoUrl) {
@@ -178,7 +243,6 @@ class _ResultDisplayScreenState extends State<ResultDisplayScreen> {
       SnackBar(content: Text(message)),
     );
     if (message == "Record deleted successfully") {
-      // 删除成功后，返回到上一个界面或者主界面
       Navigator.pop(context);
     }
   }

@@ -16,7 +16,7 @@ EcoEye 的具体架构为：前端 Flutter 和 后端 Django。
 
 ### 环境准备
 
-请先在 [Flutter 官网](https://flutter.dev/)上完成 Flutter 配置。
+请先参考 [Flutter 官网](https://flutter.dev/) 完成 Flutter 配置。
 
 推荐 Python 使用 3.10 版本。
 

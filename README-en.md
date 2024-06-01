@@ -17,7 +17,7 @@ You can check out the specific development process (code generation stage) over 
 
 ### Environment Preparation
 
-Please complete Flutter configuration on the [official website](https://flutter.dev/) first.
+Please complete Flutter configuration according to the [official website](https://flutter.dev/) first.
 
 It is recommended to use Python version 3.10.
 
